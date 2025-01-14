@@ -1,0 +1,63 @@
+# ---------------------------------------- #
+#       COMMANDS : /IGNORE <PLAYER>        #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    block_player: "&6Social &8≫ &2You &cblocked &a&n%{_social.player}%&r&2, you can't see his messages anymore ! &8(&7&o/ignore <player>&r&8)"  # {_social.player} : Player name, do not edit.
+    block_list: "&6Social &8≫ &2&nBlock list:&r&2 %{_social.blocked::*}%"
+    unblock_player: "&6Social &8≫ &2You &aunblocked &a&n%{_social.player}%&r&2, you can see his messages again ! &8(&7&o/ignore <player>&r&8)"  # {_social.player} : Player name, do not edit.
+    error_no_use: "&6Social &8≫ &cSorry, wrong command or bad arguments, or you can not use this command."
+    error_indicate_a_player: "&6Social &8≫ &cSorry, you need to indicate a online player or not yourself."
+    # SOUNDS
+    right_sound: "entity.villager.celebrate"
+    error_sound: "item.shield.block"
+
+# <-------------------> COMMANDS <-------------------> #
+
+command /ignore [<player>]:
+    usage: {@error_no_use}
+    executable by: players
+    trigger:
+        if arg-1 is not set:
+            if {social.%player's uuid%.ignored::*} is "<none>":
+                add "None" to {_social.blocked::*}
+            else:
+                loop {social.%player's uuid%.ignored::*}:
+                    add player(loop-value) to {_social.blocked::*}
+            SendMessageToPlayers(player, {@block_list}, {@error_sound})
+            stop
+        #
+        if arg-1 is player:
+            SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+            stop
+        #
+        if arg-1 is not a player:
+            set {_social.blocked::*} to {social.%player's uuid%.ignored::*}
+            SendMessageToPlayers(player, {@block_list}, {@error_sound})
+            stop
+        #
+        if {social.%player's uuid%.ignored::*} contains arg-1's uuid:
+            remove arg-1's uuid from {social.%player's uuid%.ignored::*}
+            set {_social.player} to arg-1
+            SendMessageToPlayers(player, {@unblock_player}, {@right_sound})
+            stop
+        else:
+            add arg-1's uuid to {social.%player's uuid%.ignored::*}
+            set {_social.player} to arg-1
+            SendMessageToPlayers(player, {@block_player}, {@right_sound})
+            stop
+
+# <-------------------> EVENTS <-------------------> #
+
+on chat:
+    loop all players where [{social.%player input's uuid%.ignored::*} contains event-player's uuid]:
+        remove loop-player from chat recipients
+
+# <-------------------> FUNCTIONS <-------------------> #
+
+local function SendMessageToPlayers(players: players, msg: text = "none", sound: text = "none"):
+    loop {_players::*}:
+        send {_msg} to loop-value
+        if {_sound} is not "none":
+            play sound {_sound} at volume 0.5 at pitch 1 to loop-value 

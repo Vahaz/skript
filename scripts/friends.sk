@@ -1,0 +1,141 @@
+# ---------------------------------------- #
+#   COMMANDS : /FRIENDS <TEXT> <PLAYER>    #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    friend_added: "&6Social &8≫ &a%{_social.player}% &2is now your friend !"
+    friend_removed: "&6Social &8≫ &a%{_social.player}% &2is no longer your friend ! &8(&7&o/friends remove <player>&r&8)"
+    friend_request: "&6Social &8≫ &2You send a friend request to &a%{_social.player}%&2. &8(&7&o/friends add <player>&r&8)"
+    friend_connected: "&6Social &8≫ &2Your friend &a%{_social.player}% &2connected."
+    friends_online: "&6Social &8≫ &2&nYour friend(s) online: %{_social.onlinefriends::*}%&r&2"
+    friend_disconnected: "&6Social &8≫ &aYou send a friend request to &a%{_social.player}%&2. &8(&7&o/friends add <player>&r&8)"
+    friends_list: "&6Social &8≫ &2&nYour friend(s):&r&a"
+    friends_list_online: "&2•&f %loop-value% (%now formatted as "dd.MM.yyyy"%)"
+    friends_list_offline: "&4•&f %loop-value% (%now formatted as "dd.MM.yyyy"%)"
+    no_friends: "&6Social &8≫ &2You have no friends &6&nonline&r&2 ! Use &r""/friends add"" &2to request friends !"
+    ad_friends: "&6Social &8≫ &2&lTips: &r&2You can add &afriends &2using &r""/friends add"" &2!"
+    request_formated: "&6Social &8≫ &2&l<tooltip:/friends accept <player>><cmd:/friends accept %{_social.player}%>[ACCEPT]<r> &4&l<tooltip:/friends refuse <player>><cmd:/friends refuse %{_social.player}%>[REFUSED]<r> "
+    request_received: "&6Social &8≫ &2You received a friend request from &a%{_social.player}%&2 !"
+    request_accepted: "&6Social &8≫ &2You &aaccepted &a&n%{_social.player}%&r&2's friend request !"
+    request_refused: "&6Social &8≫ &2You &crefused &a&n%{_social.player}%&r&2's friend request !"
+    error_no_use: "&6Social &8≫ &cSorry, wrong command or bad arguments, or you can not use this command."
+    error_indicate_a_player: "&6Social &8≫ &cSorry, you need to indicate a online player or not yourself."
+    error_not_requested: "&6Social &8≫ &cSorry, you do not have friend request from this player."
+    # SOUNDS
+    right_sound: "entity.villager.celebrate"
+    error_sound: "item.shield.block"
+    message_sound: "minecraft:block.note_block.bell"
+
+on join:
+    if {social.%player's uuid%.friends::*} is set:
+        set {_social.player} to player
+        loop {social.%player's uuid%.friends::*}:
+            if loop-value is online:
+                add loop-value to {_social.onlinefriends::*}
+                SendMessageToPlayers(loop-value, {@friend_connected}, {@message_sound})
+        SendMessageToPlayers(player, {@friends_online}, {@message_sound}) if {_social.onlinefriends::*} is set
+    else:
+        SendMessageToPlayers(player, {@no_friends}, {@message_sound})
+
+every 5 minutes:
+    loop all players:
+        if {social.%loop-value's uuid%.friends::*} is not set:
+            SendMessageToPlayers(loop-value, {@ad_friends}, {@message_sound})
+
+# <-------------------> COMMANDS <-------------------> #
+
+command /friends <text> [<player>]:
+    usage: {@error_no_use}
+    executable by: players
+    trigger:
+        if arg-1 is not set:
+            SendMessageToPlayers(player, {@error_no_use}, {@error_sound})
+            stop
+        #
+        if arg-1 is "add":
+            if arg-2 is not set:
+                SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+                stop
+            if arg-2 is player:
+                SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+                stop
+            if script "ignore.sk" is loaded:
+                if {social.%arg-2's uuid%.ignored::*} contains player's uuid:
+                    SendMessageToPlayers(player, {@error_no_use}, {@error_sound})
+                    stop
+                if {social.%player's uuid%.ignored::*} contains arg-2's uuid:
+                    SendMessageToPlayers(player, {@error_no_use}, {@error_sound})
+                    stop
+            add arg-2's uuid to {social.%player's uuid%.requests::*}
+            set {_social.player} to player
+            SendMessageToPlayers(arg-2, {@request_received}, {@message_sound})
+            send formatted {@request_formated} to arg-2
+            stop
+        #
+        if arg-1 is "accept":
+            if arg-2 is not set:
+                SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+                stop
+            if {social.%arg-2's uuid%.requests::*} doesn't contain player's uuid:
+                SendMessageToPlayers(player, {@error_not_requested}, {@error_sound})
+                stop
+            if {social.%arg-2's uuid%.requests::*} contains player's uuid:
+                set {_social.player} to player
+                SendMessageToPlayers(arg-2, {@friend_added}, {@right_sound})
+                set {_social.player} to arg-2
+                SendMessageToPlayers(player, {@request_accepted}, {@right_sound})
+                SendMessageToPlayers(player, {@friend_added}, {@right_sound})
+                add arg-2's uuid to {social.%player's uuid%.friends::*}
+                add player's uuid to {social.%arg-2's uuid%.friends::*}
+                stop
+        #
+        if arg-1 is "refuse":
+            if arg-2 is not set:
+                SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+                stop
+            if arg-2 is player:
+                SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+                stop
+            if {social.%arg-2's uuid%.requests::*} doesn't contain player's uuid:
+                SendMessageToPlayers(player, {@error_not_requested}, {@error_sound})
+                stop
+            if {social.%arg-2's uuid%.requests::*} contains player's uuid:
+                set {_social.player} to arg-2
+                SendMessageToPlayers(player, {@request_refused}, {@right_sound})
+                remove player's uuid from {social.%arg-2's uuid%.requests::*}
+                stop
+        #
+        if arg-1 is "remove":
+            if arg-2 is not set:
+                SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+                stop
+            if arg-2 is player:
+                SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+                stop
+            if {social.%player's uuid%.friends::*} contains arg-2's uuid:
+                remove arg-2's uuid from {social.%player's uuid%.friends::*}
+                remove player's uuid from {social.%arg-2's uuid%.friends::*}
+                set {_social.player} to arg-2
+                SendMessageToPlayers(player, {@friend_removed}, {@right_sound})
+                stop
+            else:
+                SendMessageToPlayers(player, {@error_no_use}, {@error_sound})
+                stop
+        #
+        if arg-1 is "list": #%now formatted as "dd.MM.yyyy"%
+            if {social.%player's uuid%.friends::*} is not set:
+                SendMessageToPlayers(player, {@no_friends})
+            if {social.%player's uuid%.friends::*} is set:
+                SendMessageToPlayers(player, {@friends_list}, {@message_sound})
+                loop {social.%player's uuid%.friends::*}:
+                    add player(loop-value) to {_social.friends::*}
+            stop
+
+# <-------------------> FUNCTIONS <-------------------> #
+
+local function SendMessageToPlayers(players: players, msg: text = "none", sound: text = "none"):
+    loop {_players::*}:
+        send {_msg} to loop-value
+        if {_sound} is not "none":
+            play sound {_sound} at volume 0.5 at pitch 1 to loop-value 

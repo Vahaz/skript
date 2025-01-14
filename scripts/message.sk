@@ -1,0 +1,104 @@
+# ---------------------------------------- #
+#     COMMANDS : /MsG <PLAYER> <TEXT>      #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    message_syntax: "&7[&6MP&7] %{_social.sender}%&8 ≫&7 %{_social.receiver}%&8 |&r ""%{_social.message}%"""                                    # {_social.sender} : Sender name | {_social.receiver} : Receiver name | {_social.message} content
+    message_block: "&6Social &8≫ &2You &cblocked &2your private messages. &8(&7&o/message toggle&r&8)"
+    message_unblock: "&6Social &8≫ &2You &aunblocked &2your private messages. &8(&7&o/message toggle&r&8)"
+    message_cant_reach: "&6Social &8≫ &cSorry, you can not reach this player. &8(&7&oThis is not a issue&r&8)"
+    error_no_use: "&6Social &8≫ &cSorry, wrong command or bad arguments, or you can not use this command."
+    error_indicate_a_player: "&6Social &8≫ &cSorry, you need to indicate a online player or not yourself."
+    # SOUNDS
+    right_sound: "entity.villager.celebrate"
+    error_sound: "item.shield.block"
+    message_sound: "minecraft:block.note_block.bell"
+
+# <-------------------> COMMANDS <-------------------> #
+  
+command /message [<offlineplayer>] [<text>]:
+    aliases: /msg
+    usage: {@error_no_use}
+    executable by: players
+    trigger:
+        if arg-1 is "toggle":
+            if {social.%player's uuid%.allowmsg} is true:
+                set {social.%player's uuid%.allowmsg} to false
+                SendMessageToPlayers(player, {@message_block}, {@right_sound})
+                stop
+            else:
+                set {social.%player's uuid%.allowmsg} to true
+                SendMessageToPlayers(player, {@message_unblock}, {@right_sound})
+                stop
+        #
+        if arg-1 is not set:
+            SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+            stop
+        #
+        if arg-1 is not a player:
+            SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+            stop
+        #
+        if arg-1 is player:
+            SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+            stop
+        #
+        if arg-1 is not online:
+            SendMessageToPlayers(player, {@error_indicate_a_player}, {@error_sound})
+            stop
+        #
+        if arg-1 is online:
+            if arg-2 is not set:
+                SendMessageToPlayers(player, {@error_no_use}, {@error_sound})
+                stop
+            if {social.%player's uuid%.allowmsg} is false:
+                SendMessageToPlayers(player, {@message_cant_reach}, {@error_sound})
+                stop
+            if {social.%arg-1's uuid%.allowmsg} is false:
+                SendMessageToPlayers(player, {@message_cant_reach}, {@error_sound})
+                stop
+            if script "ignore.sk" is loaded:
+                if {social.%arg-1's uuid%.ignored::*} contains player's uuid:
+                    SendMessageToPlayers(player, {@message_cant_reach}, {@error_sound})
+                    stop
+                if {social.%player's uuid%.ignored::*} contains arg-1's uuid:
+                    SendMessageToPlayers(player, {@message_cant_reach}, {@error_sound})
+                    stop
+            set {_social.sender} to player
+            set {_social.receiver} to arg-1
+            set {_social.message} to arg-2
+            set {social.%player's uuid%.lastplayermessaged} to arg-1's uuid
+            set {social.%arg-1's uuid%.lastplayermessaged} to player's uuid
+            SendMessageToPlayers((player and {_social.receiver}), {@message_syntax}, {@message_sound})
+            stop
+
+command /response <text>:
+    aliases: /r
+    usage: {@error_no_use}
+    executable by: players
+    trigger:
+        if arg-1 is not set:
+            SendMessageToPlayers(player, {@error_no_use}, {@error_sound})
+            stop
+        #
+        if {social.%player's uuid%.lastplayermessaged} is set:
+            set {_social.sender} to player
+            set {_social.receiver} to {social.%player's uuid%.lastplayermessaged} parsed as player
+            set {_social.message} to arg-1
+            if script "ignore.sk" is loaded:
+                if {social.%{_social.receiver}'s uuid%.ignored::*} contains player's uuid:
+                    SendMessageToPlayers(player, {@message_cant_reach}, {@error_sound})
+                    stop
+            set {social.%player's uuid%.lastplayermessaged} to {_social.receiver}'s uuid
+            set {social.%arg-1's uuid%.lastplayermessaged} to player's uuid
+            SendMessageToPlayers((player and {_social.receiver}), {@message_syntax}, {@message_sound})
+            stop
+
+# <-------------------> FUNCTIONS <-------------------> #
+
+local function SendMessageToPlayers(players: players, msg: text = "none", sound: text = "none"):
+    loop {_players::*}:
+        send {_msg} to loop-value
+        if {_sound} is not "none":
+            play sound {_sound} at volume 0.5 at pitch 1 to loop-value 

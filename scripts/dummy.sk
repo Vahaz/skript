@@ -1,0 +1,34 @@
+# ---------------------------------------- #
+#           MOB : TRAINING DUMMY           #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    dummy_name: "≫ Training Dummy"
+    dummy_message: "&6Training Dummy &8≫&r You made &4%damage%&r damage !"
+    dummy_mod_remove: "&6Training Dummy &8≫&r &aYou removed the training dummy, &f/dummy&a to place it !"
+    dummy_sound: "minecraft:entity.armor_stand.break"
+
+command /dummy:
+    executable by: players
+    permission: "command.dummy"
+    permission message: &4Sorry, you do not have the required permission to execute this command.
+    trigger:
+        spawn 1 villager at player's location
+        set name of last spawned entity to {@dummy_name}
+        set artificial intelligence of last spawned entity to false
+        stop
+
+on right click on villager:
+    if event-entity's name contains {@dummy_name}:
+        if player has permission "command.mod.dummy":
+            delete event-entity 
+            send {@dummy_mod_remove} to player
+            play sound {@dummy_sound} at volume 0.5 at pitch 1 to player
+            stop
+
+on damage:
+    if victim's name contains {@dummy_name}:
+        send {@dummy_message} to attacker
+        play sound {@dummy_sound} at volume 0.5 at pitch 1 to attacker
+        cancel event

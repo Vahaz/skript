@@ -1,0 +1,100 @@
+# ---------------------------------------- #
+#         COMMANDS : /HOME <TEXT>          #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    home_not_found: "&4Homes &8≫&r &cSorry, no home &4""%arg-1%""&c found !"
+    home_already_exist: "&4Homes &8≫&r &cSorry, home &4""%arg-1%""&c already exist. &8(&7/sethome <name>&8)"
+    home_no_name: "&4Homes &8≫&r &cSorry, you must set a home name."
+    home_deleted: "&3Homes &8≫&r &aHome &f""%arg-1%""&a as been deleted. &8(&7/delhome <home>&8)"
+    home_set: "&3Homes &8≫&r &aHome &f""%arg-1%""&a placed to your current location. &8(&7/sethome <name>&8)"
+    home_teleport: "&3Homes &8≫&r &aTeleported to &f""%arg-1%""&a home. &8(&7/home <home>&8)"
+    home_usage: &4Homes &8≫&r &cUsage : /home <home/list>
+    delhome_usage: &4Homes &8≫&r &cUsage : /delhome <home>
+    sethome_usage: &4Homes &8≫&r &cUsage : /sethome <name>
+    home_no_permission: &4Sorry, you do not have the required permission to execute this command.
+    home_cooldown: &4Sorry, you are executing this command to quickly. (cooldown: %remaining time%)
+    home_list: "&3Homes &8≫&r &a&nYour homes list:&r"
+    home_list_data: "&3•&f %loop-value%"
+    # SOUNDS
+    right_sound: "entity.villager.celebrate"
+    home_set_sound: "minecraft:ui.cartography_table.take_result"
+    teleport_sound: "entity.enderman.teleport"
+    error_sound: "item.shield.block"
+
+# <-------------------> COMMANDS <-------------------> #
+
+command /sethome <text>:  
+    executable by: players
+    usage: {@sethome_usage}
+    permission: "command.sethome"
+    permission message: {@home_no_permission}
+    trigger:
+        if arg-1 is not set:
+            SendMessageToPlayers(player, {@home_no_name}, {@error_sound})
+            stop
+        if arg-1 is set:
+            stop if arg-1 is "list"
+            if {homes::%player's uuid%::*} contains arg-1:
+                SendMessageToPlayers(player, {@home_already_exist}, {@error_sound})
+                stop
+            else:
+                add arg-1 to {homes::%player's uuid%::*}
+                set {homes::%player's uuid%::%arg-1%.location} to player's location
+                SendMessageToPlayers(player, {@home_set}, {@home_set_sound})
+                stop
+
+command /delhome <text> [<player>]:
+    executable by: players
+    usage: {@delhome_usage}
+    permission: "command.delhome"
+    permission message: {@home_no_permission}
+    trigger:
+        if arg-1 is not set:
+            SendMessageToPlayers(player, {@home_no_name}, {@error_sound})
+            stop
+        if arg-2 and arg-1 are set:
+            broadcast "%arg-1% %arg-2%"
+            stop
+        if arg-1 is set:
+            if {homes::%player's uuid%::*} do not contain arg-1:
+                SendMessageToPlayers(player, {@home_not_found}, {@error_sound})
+                stop
+            if {homes::%player's uuid%::*} contains arg-1:
+                remove arg-1 from {homes::%player's uuid%::*}
+                SendMessageToPlayers(player, {@home_deleted}, {@right_sound})
+                stop
+
+command /home <text>:
+    executable by: players
+    usage: {@home_usage}
+    permission: "command.home"
+    permission message: {@home_no_permission}
+    cooldown: 15 seconds
+    cooldown message: {@home_cooldown}
+    cooldown bypass: "command.home.bypass"
+    trigger:
+        if arg-1 is "list":
+            cancel the cooldown
+            SendMessageToPlayers(player, {@home_list}, {@right_sound})
+            loop {homes::%player's uuid%::*}:
+                continue if loop-value is location
+                SendMessageToPlayers(player, {@home_list_data})
+            stop
+        if {homes::%player's uuid%::*} do not contain arg-1:
+            SendMessageToPlayers(player, {@home_not_found}, {@error_sound})
+            cancel the cooldown
+            stop
+        if {homes::%player's uuid%::*} contains arg-1:
+            teleport player to {homes::%player's uuid%::%arg-1%.location}
+            SendMessageToPlayers(player, {@home_teleport}, {@teleport_sound})
+            stop
+
+# <-------------------> FUNCTIONS <-------------------> #
+
+local function SendMessageToPlayers(players: players, msg: text = "none", sound: text = "none"):
+    loop {_players::*}:
+        send {_msg} to loop-value
+        if {_sound} is not "none":
+            play sound {_sound} at volume 0.5 at pitch 1 to loop-value 

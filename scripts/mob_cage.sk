@@ -1,0 +1,64 @@
+# ---------------------------------------- #
+#            ITEMS : MOB CAGE              #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    mob_cage_name: "&5Mob Cage"
+    mob_cage_lore: "&8≫&r &fCapture a mob and move it around."
+    mob_cage_sound: "entity.item.pickup"
+    mob_cage_full: "&4Mob Cage &8≫&r &cYour cage is full"
+    mob_cage_full_sound: "item.shield.block"
+
+on right click using trial spawner:
+    if event-item's name contains {@mob_cage_name}:
+        cancel event
+        if targeted entity is set:
+            stop if targeted entity is a monster
+            if targeted entity is a creature:
+                set {_id} to the 3st line of event-item's lore
+                if {mob_cages::%{_id}%.entity} is "empty":
+                    set {mob_cages::%{_id}%.entity} to type of event-entity
+                    set {mob_cages::%{_id}%.name} to event-entity's name
+                    set the 2st line of player's tool's lore to "&8≫&r &fContains: &6%{mob_cages::%{_id}%.entity}%"
+                    enchant the player's tool with sharpness 5
+                    play sound {@mob_cage_sound} at volume 0.5 at pitch 1 to player
+                    delete event-entity
+                else:
+                    send {@mob_cage_full} to player
+                    play sound {@mob_cage_full_sound} at volume 0.5 at pitch 1 to player
+                    stop
+        else:
+            set {_id} to the 3st line of event-item's lore
+            set {_mob} to {mob_cages::%{_id}%.entity}
+            set {_coord} to the targeted block
+            add 1 to y coord of {_coord}
+            spawn 1 of {_mob} at {_coord}
+            set name of last spawned entity to "%{mob_cages::%{_id}%.name}%" if "%{mob_cages::%{_id}%.name}%" is not "<none>" 
+            set {mob_cages::%{_id}%.entity} to "empty"
+            set the 2st line of player's tool's lore to "&8≫&r &fContains: &6%{mob_cages::%{_id}%.entity}%"
+            disenchant player's tool
+            stop
+
+on inventory click:
+    if event-inventory's type is anvil inventory:
+        cancel event if event-item's lore contains {@mob_cage_lore}
+
+command /debug [<text>]:
+    trigger:
+        if arg-1 is "clear":
+            clear {mob_cages::*}
+        else:
+            broadcast "%{mob_cages::*}%"
+
+command /mobcage:
+    executable by: players
+    permission: "command.mob_cage"
+    permission message: &4Sorry, you do not have the required permission to execute this command.
+    trigger:
+        set {_item} to a trial spawner named {@mob_cage_name} with lore {@mob_cage_lore}
+        set {_time} to unix timestamp of now
+        set {mob_cages::%{_time}%.entity} to "empty"
+        set the 2st line of {_item}'s lore to "&8≫&r &fContains: &6%{mob_cages::%{_time}%.entity}%"
+        set the 3st line of {_item}'s lore to "%{_time}%"
+        give 1 of {_item} to player

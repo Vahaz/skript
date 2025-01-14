@@ -1,0 +1,19 @@
+# ---------------------------------------- #
+#        COMMANDS : /BROADCAST <TEXT>      #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    broadcast_prefix: "&6Broadcast &8≫&r "
+
+command /broadcast <text>:
+    aliases: /bd
+    executable by: players and console
+    usage: &4Correct usage: /broadcast <text>&r
+    description: A simple command to broadcast a message.
+    permission: "command.broadcast"
+    permission message: &4Sorry, you do not have the required permission to execute this command.
+    trigger:
+        broadcast {@broadcast_prefix} + arg-1
+        loop all players:
+            play sound "minecraft:block.note_block.bass" at volume 0.5 at pitch 1 to loop-value  

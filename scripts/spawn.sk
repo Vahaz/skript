@@ -1,0 +1,92 @@
+# ---------------------------------------- #
+# SPAWN & COMMAND : ANTI-GRIEF / FEATURES  #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    spawn_world: "world" #Spawn world name
+    spawn_changed: "&2Spawn &8≫&r &aSpawn placed to your current location. &8(&7/spawn set&8)"
+    spawn_teleported: "&2Spawn &8≫&r &aYou teleported to the spawn ! &8(&7/spawn&8)"
+    spawn_force_tp: "&2Spawn &8≫&r &aYou teleported &f%arg-1%&a to the spawn ! &8(&7/spawn&8)"
+    spawn_set: "minecraft:ui.cartography_table.take_result"
+    teleport_sound: "entity.enderman.teleport"
+    boost_sound: "minecraft:entity.ender_dragon.shoot"
+
+command /spawn [<offline player>]:
+    executable by: players
+    usage: &4Correct usage: /spawn <player>&r
+    description: A simple command to teleport to the spawn.
+    permission: "command.spawn"
+    permission message: &4Sorry, you do not have the required permission to execute this command.
+    cooldown: 10 seconds
+    cooldown message: &4Sorry, you are executing this command to quickly. (cooldown: %remaining time%)
+    cooldown bypass: "command.spawn.bypass"
+    trigger:
+        if arg-1 is "set":
+            if player have permission "spawn.bypass.set":
+                set {spawn.location} to player's location
+                send {@spawn_changed} to player
+                play sound {@spawn_set} at volume 0.5 at pitch 1 to player
+                stop
+        if arg-1 is a player:
+            if player have permission "spawn.bypass.set":
+                teleport arg-1 at {spawn.location}
+                send {@spawn_teleported} to arg-1
+                send {@spawn_force_tp} to player
+                play sound {@teleport_sound} at volume 0.5 at pitch 1 to arg-1
+                set the arg-1's food level to 10
+                stop
+        if {spawn.location} is set:
+            teleport player at {spawn.location}
+            send {@spawn_teleported} to player
+            play sound {@teleport_sound} at volume 0.5 at pitch 1 to player
+            set the player's food level to 10
+            stop
+
+
+# Boost iron plate
+on redstone change:
+    if event-block's world is {@spawn_world}:
+        if event-block is iron pressure plate:
+            loop all players where [distance between player input's location and event-location is smaller than 1]:
+                push loop-value up at speed 1
+                push loop-value forward at speed 2
+                play sound {@boost_sound} at volume 0.5 at pitch 1 to loop-value
+                stop
+
+# Walk speed boost
+on walking on (red terracotta, lime terracotta or blue terracotta):
+    stop if event-world is not {@spawn_world}
+    if event-world is {@spawn_world}:
+        if active potion effects of event-player is not potion effect of speed:
+            remove speed from potion effects of event-player
+            add potion effect of speed 3 without particles for 5 seconds to potion effects of event-player
+
+# Anti-Grief
+on break:
+    if event-world is {@spawn_world}:
+        cancel event if event-player do not have permission "spawn.bypass.break"
+
+on block damaging:
+    if event-world is {@spawn_world}:
+        cancel event if event-player do not have permission "spawn.bypass.blockdamage"
+
+on click:
+    if event-world is {@spawn_world}:
+        cancel event if event-player do not have permission "spawn.bypass.click"
+
+on damage:
+    if event-world is {@spawn_world}:
+        cancel event if attacker do not have permission "spawn.bypass.damage"
+
+on drop:
+    if event-world is {@spawn_world}:
+        cancel event if event-player do not have permission "spawn.bypass.drop"
+
+on explode:
+    if event-world is {@spawn_world}:
+        cancel event if event-player do not have permission "spawn.bypass.explode"
+
+on food bar change:
+    if event-world is {@spawn_world}:
+        cancel event if event-player do not have permission "spawn.bypass.foodbarchange"

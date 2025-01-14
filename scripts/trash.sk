@@ -1,0 +1,19 @@
+# ---------------------------------------- #
+#            COMMANDS : /TRASH             #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    trash_name: "&8≫&r &6&lTRASHCAN"
+    trash_message: "&3Trash &8≫&r &aOpening trash can..."
+
+command /trash:
+    aliases: /poubelle, /void
+    executable by: players
+    usage: &4Correct usage: /trash&r
+    description: A simple command to open a trash can.
+    permission: "command.trash"
+    permission message: &4Sorry, you do not have the required permission to execute this command.
+    trigger:
+        show chest inventory named {@trash_name} for player
+        send {@trash_message} to player

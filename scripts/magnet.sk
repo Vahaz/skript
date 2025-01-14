@@ -1,0 +1,37 @@
+# ---------------------------------------- #
+#             ITEMS : MAGNET               #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    magnet_name: "&eMagnet"
+    magnet_lore: "&8≫&r &fRetrieve items in a radius around the player."
+    magnet_sound: "entity.item.pickup"
+    magnet_on_cooldown: "&4Magnet &8≫&r &cYour magnet is on cooldown, wait &4&n%item cooldown of player's tool for player%"
+    magnet_on_cooldown_sound: "item.shield.block"
+    magnet_radius: 5
+    magnet_cooldown: 10 seconds
+
+on right click with a compass:
+    if event-item's name is {@magnet_name}:
+        if player has player's tool on cooldown:
+            send {@magnet_on_cooldown} to player
+            play sound {@magnet_on_cooldown_sound} at volume 0.5 at pitch 1 to player
+        else:
+            loop all entities in radius {@magnet_radius} around player where [entity input is a dropped item]:
+                teleport loop-entity to player
+                set item cooldown of player's tool for player to {@magnet_cooldown}
+                play sound {@magnet_sound} at volume 0.5 at pitch 1 to player
+
+on inventory click:
+    if event-inventory's type is anvil inventory:
+        cancel event if event-item's lore contains {@magnet_lore}
+
+command /magnet:
+    executable by: players
+    permission: "command.magnet"
+    permission message: &4Sorry, you do not have the required permission to execute this command.
+    trigger:
+        set {_item} to a compass named {@magnet_name} with lore {@magnet_lore}
+        set the 2st line of {_item}'s lore to "&o&8(%unix timestamp of now%)"
+        give 1 of {_item} to player

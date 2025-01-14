@@ -1,0 +1,102 @@
+# ---------------------------------------- #
+#         COMMANDS : /TPA <PLAYER>         #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+options:
+    error_wrong_command: "&4[TPA] Wrong command, please fill an argument to execute this command ! (/tpa <player>)"
+    error_wrong_argument: "&4[TPA] Sorry, wrong argument or player is not online ! (/tpa <player>)"
+    error_not_self: "&4[TPA] You can not teleport to yourself ! (/tpa <player>)"
+    error_no_request: "&4[TPA] You do not received teleportation request."
+    error_cant_request : "&4[TPA] Sorry, you can not request to teleport to this player."
+    request_refuse: "&4[TPA] You refuse &c%{_command.tpa.temporary}% &4teleport request !"
+    request_has_been_refused: "&4[TPA] Your teleport request has been refused."
+    request_accepted: "&6[TPA] &2You accepted &r%{_command.tpa.temporary}% &2teleport request !"
+    request_teleport: "&6[TPA] &2You succesfully teleported to &r%{_command.tpa.temporary}%&2."
+    request_received: "&6[TPA] &r%{_command.tpa.temporary}% &7want to teleport to your location !"
+    request_formatted: "&2&l<tooltip:/tpa accept><cmd:/tpa accept>[ACCEPT]<r> &4&l<tooltip:/tpa refuse><cmd:/tpa refuse>[REFUSED]<r>"
+    request_send: "&6[TPA] &2You send a teleport request to &r%{_command.tpa.temporary}%&2."
+    # SOUNDS
+    error_sound: "item.shield.block"
+    teleport_sound: "entity.enderman.teleport"
+    message_sound: "minecraft:block.note_block.bell"
+
+
+command /teleportat <offlineplayer>:
+    aliases: /tpa
+    executable by: players
+    usage: &4Correct usage: /tpa <player>&r
+    description: A simple command to teleport to someone.
+    permission: "command.tpa"
+    permission message: &4Sorry, you do not have the required permission to execute this command.
+    cooldown: 15 seconds
+    cooldown message: &4Sorry, you are executing this command to quickly. (cooldown: %remaining time%)
+    cooldown bypass: "command.tpa.bypass"
+    trigger:
+        if arg-1 is not set:
+            SendMessageToPlayers(player, {@error_wrong_command}, {@error_sound})
+            cancel the cooldown
+            stop
+        #
+        if arg-1 is player:
+            SendMessageToPlayers(player, {@error_not_self}, {@error_sound})
+            cancel the cooldown
+            stop
+        #
+        if arg-1 is "accept":
+            if {command.tpa.%player's uuid%.requested} is not set:
+                SendMessageToPlayers(player, {@error_no_request}, {@error_sound})
+                cancel the cooldown
+                stop
+            #
+            if {command.tpa.%player's uuid%.requested} parsed as player is not online:
+                SendMessageToPlayers(player, {@error_wrong_argument}, {@error_sound})
+                clear {command.tpa.%player's uuid%.requested}
+                cancel the cooldown
+                stop
+            #
+            set {_command.tpa.temporary} to player
+            SendMessageToPlayers({command.tpa.%player's uuid%.requested}, {@request_teleport}, {@teleport_sound})
+            set {_command.tpa.temporary} to player({command.tpa.%player's uuid%.requested}) # Zahav
+            SendMessageToPlayers(player, {@request_accepted}, {@teleport_sound})
+            teleport {_command.tpa.temporary} to player's location
+            clear {command.tpa.%player's uuid%.requested}
+            stop
+        #
+        if arg-1 is "refuse":
+            if {command.tpa.%player's uuid%.requested} is not set:
+                SendMessageToPlayers(player, {@error_no_request}, {@error_sound})
+                cancel the cooldown
+                stop
+            #
+            set {_command.tpa.temporary} to player({command.tpa.%player's uuid%.requested})
+            SendMessageToPlayers(player, {@request_refuse}, {@error_sound})
+            if {command.tpa.%player's uuid%.requested} parsed as player is online:
+                SendMessageToPlayers({_command.tpa.temporary}, {@request_has_been_refused}, {@error_sound})
+            clear {command.tpa.%player's uuid%.requested}
+            stop
+        #
+        if arg-1 is not online: 
+            SendMessageToPlayers(player, {@error_wrong_argument}, {@error_sound})
+            cancel the cooldown
+            stop
+        #
+        if arg-1 is online:
+            if arg-1 has permission "command.tpa":
+                set {_command.tpa.temporary} to player
+                SendMessageToPlayers(arg-1, {@request_received}, {@message_sound})
+                SendMessageToPlayers(arg-1, {@request_formatted})
+                set {_command.tpa.temporary} to arg-1
+                SendMessageToPlayers(player, {@request_send}, {@message_sound})
+                set {command.tpa.%arg-1's uuid%.requested} to player's uuid
+                stop
+            else:
+                SendMessageToPlayers(player, {@error_cant_request}, {@error_sound})
+                cancel the cooldown
+                stop
+
+local function SendMessageToPlayers(players: players, msg: text, sound: text = "none"):
+    loop {_players::*}:
+        send {_msg} to loop-value
+        if {_sound} is not "none":
+            play sound {_sound} at volume 0.5 at pitch 1 to loop-value 
