@@ -6,6 +6,9 @@ They might have some bugs or errors.
 
 Some features where specific for my server, but I let them in to showcases Skript features.
 
+# Archived
+This repo will by archived to store it. It will not receive any kind of updates.
+
 ## Skripts
 | Name | Permission | Description |
 | ------------------------- | ---------------- | ---------------- |
