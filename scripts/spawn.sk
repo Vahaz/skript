@@ -9,8 +9,10 @@ options:
     spawn_teleported: "&2Spawn &8≫&r &aYou teleported to the spawn ! &8(&7/spawn&8)"
     spawn_force_tp: "&2Spawn &8≫&r &aYou teleported &f%arg-1%&a to the spawn ! &8(&7/spawn&8)"
     spawn_set: "minecraft:ui.cartography_table.take_result"
-    teleport_sound: "entity.enderman.teleport"
+    teleport_sound: "minecraft:entity.enderman.teleport"
     boost_sound: "minecraft:entity.ender_dragon.shoot"
+    boost_block: heavy_weighted_pressure_plate #Default: heavy_weighted_pressure_plate
+    speed_block: (red terracotta, lime terracotta or blue terracotta) #Default: (red terracotta, lime terracotta or blue terracotta)
 
 command /spawn [<offline player>]:
     executable by: players
@@ -44,18 +46,18 @@ command /spawn [<offline player>]:
             stop
 
 
-# Boost iron plate
+# Boost on block (see options)
 on redstone change:
     if event-block's world is {@spawn_world}:
-        if event-block is iron pressure plate:
+        if event-block's type is {@boost_block}:
             loop all players where [distance between player input's location and event-location is smaller than 1]:
                 push loop-value up at speed 1
                 push loop-value forward at speed 2
                 play sound {@boost_sound} at volume 0.5 at pitch 1 to loop-value
                 stop
 
-# Walk speed boost
-on walking on (red terracotta, lime terracotta or blue terracotta):
+# Walk speed boost (see options)
+on walking on {@speed_block}:
     stop if event-world is not {@spawn_world}
     if event-world is {@spawn_world}:
         if active potion effects of event-player is not potion effect of speed:
