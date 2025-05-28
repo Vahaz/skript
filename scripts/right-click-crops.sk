@@ -1,0 +1,20 @@
+# ---------------------------------------- #
+#       EVENTS : RIGHT CLICK ON CROP       #
+#             Made by: Vahaz               #
+# ---------------------------------------- #
+
+# To add a valid_crop: add the crop block name with the age attribute.
+options:
+    pick_crop_sound: "minecraft:block.sweet_berry_bush.pick_berries"
+    valid_crop: (wheat[age=7], potatoes[age=7], carrots[age=7], beetroots[age=3] or nether_wart[age=3])
+
+on right click:
+    if {@valid_crop} contains event-block:
+        if player has the permission "command.rcc":
+            set {_rcc.type} to event-block's type
+            set {_rcc.loc} to event-block's location
+            break event-block naturally using player's tool
+            play sound {@pick_crop_sound} at volume 0.5 at pitch 1 to player
+            set block at {_rcc.loc} to {_rcc.type}
+            set age of block at {_rcc.loc} to 0
+            stop
