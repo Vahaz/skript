@@ -7,7 +7,7 @@ They might have some bugs or errors.
 Some features where specific for my server, but I let them in to showcases Skript features.
 
 # Archived
-This repo will by archived to store it. It will not receive any kind of updates.
+This repo will by archived to store it. It will not receive any kind of updates (at least, do not expect them).
 
 ## Skripts
 | Name | Permission | Description |
@@ -20,6 +20,7 @@ This repo will by archived to store it. It will not receive any kind of updates.
 | magnet.sk | command.magnet | Allow player to have a magnet item who pull nearby items. |
 | message.sk | none | Allow player to send privates messages to another player. |
 | mob_cage.sk | command.mob_cage | Allow player to capture mob into an "cage" to move them around and carry them in their inventories. |
+| right_click_crops.sk | command.rcc | Allow the player to right-click on crops to harvest and replant them without breaking them. |
 | spawn.sk | command.spawn command.spawn.bypass | Allow player to teleport to spawn, set spawn, run faster on special blocks and get a boost on plates. The player also can't break, drop, explode or click on spawn-world blocks. |
 | tpa.sk | command.tpa command.tpa.bypass | Allow player to teleport to another player with cooldown. |
 | trash.sk | command.trash | Allow player to trash items. |
